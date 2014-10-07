@@ -19,3 +19,4 @@ Test.scala: entry point when testing locally
 
 TreeNode.scala: data structure of tree node of FPTree
 
+This verison of FPGrowth can be successfully run by Test.scala. However, it can not print results on the terminal when running on Spark1.1.0. I will try to fix this problem later.
