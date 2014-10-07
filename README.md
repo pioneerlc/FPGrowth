@@ -7,7 +7,7 @@ Author: Mark Lin
 
 E-mail: chlin.ecnu@gmail.com
 
-Version: 1.0
+
 
 This project contains files as follows:
 
@@ -19,4 +19,13 @@ Test.scala: entry point when testing locally
 
 TreeNode.scala: data structure of tree node of FPTree
 
+
+
+Revision log
+========
+Version 1.0：
 This verison of FPGrowth can be successfully run by Test.scala. However, it can not print results on the terminal when running on Spark1.1.0. I will try to fix this problem later.
+
+
+
+
