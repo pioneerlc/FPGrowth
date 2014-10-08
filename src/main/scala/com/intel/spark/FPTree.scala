@@ -4,7 +4,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 
 /**
- * TreeNode.scala
+ * FPTree.scala
  * This is the definition of FP-Tree.
  * Author: Mark Lin
  * E-mail: chlin.ecnu@gmail.com
