@@ -9,7 +9,7 @@ import org.apache.spark.SparkContext._
  * This is a navie implementation of FPGrowth for learning how to use Spark and Scala.
  * Author: Mark Lin
  * E-mail: chlin.ecnu@gmail.com
- * Version: 1.0
+ * Version: 1.1
  */
 
 
@@ -21,7 +21,7 @@ object FPGrowth {
         |This is a navie implementation of FPGrowth for learning how to use Spark and Scala.
         |Author: Mark Lin
         |E-mail: chlin.ecnu@gmail.com
-        |Version: 1.0
+        |Version: 1.1
       """.stripMargin)
   }
   def main(args: Array[String]): Unit = {
