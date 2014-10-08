@@ -8,7 +8,7 @@ import scala.collection.mutable.HashMap
  * This is the definition of FP-Tree.
  * Author: Mark Lin
  * E-mail: chlin.ecnu@gmail.com
- * Version: 1.0
+ * Version: 1.1
  */
 
 object FPTree {
