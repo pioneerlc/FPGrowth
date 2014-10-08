@@ -1,9 +1,7 @@
 package com.intel.spark
 
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
-import scala.collection.mutable.Buffer
 
 /**
  * TreeNode.scala
@@ -14,45 +12,46 @@ import scala.collection.mutable.Buffer
  */
 
 object FPTree {
-  def apply(records: Array[Array[String]], supportThreshold: Int): Unit ={
-    var transactions: Buffer[Buffer[String]] = new ArrayBuffer[Buffer[String]]()
+  def apply(records: Array[Array[String]], supportThreshold: Int): FPTree ={
+    var transactions = new ArrayBuffer[ArrayBuffer[String]]()
     for(record <- records){
-      transactions += record.toBuffer
+      var transaction = new ArrayBuffer[String]()
+      record.copyToBuffer(transaction)
+      transactions += transaction
     }
-    val fptree = new FPTree()
+    val fptree = new FPTree(new ArrayBuffer[String]())
     fptree.FPGrowth(transactions, new ArrayBuffer[String](), supportThreshold)
+    fptree
   }
 }
 
-class FPTree{
-  def buildHeaderTable(transactions: Buffer[Buffer[String]], supportThreshold: Int): Array[TreeNode] = {
-
+class FPTree(var patterns: ArrayBuffer[String]){
+  def buildHeaderTable(transactions: ArrayBuffer[ArrayBuffer[String]], supportThreshold: Int): ArrayBuffer[TreeNode] = {
     if(transactions.nonEmpty){
       val map: HashMap[String, TreeNode] = new HashMap[String, TreeNode]()
       for(transaction <- transactions){
         for(name <- transaction){
-          if(!map.keySet.contains(name)){
+          if(!map.contains(name)){
             val node: TreeNode = new TreeNode(name)
             node.count = 1
-            map.put(name, node)
+            map(name) = node
           }else{
             map(name).count += 1
           }
         }
       }
-
-      val headerTable = map.filter(_._2.count >= supportThreshold).values.toArray.sortWith(_.count > _.count)
+      var headerTable = new ArrayBuffer[TreeNode]()
+      map.filter(_._2.count >= supportThreshold).values.toArray.sortWith(_.count > _.count).copyToBuffer(headerTable)
       headerTable //return headerTable
     }else{
       null //if transactions is empty, return null
     }
   }
 
-  def buildFPTree(transactions: Buffer[Buffer[String]], headerTable: Buffer[TreeNode]): TreeNode = {
+  def buildFPTree(transactions: ArrayBuffer[ArrayBuffer[String]], headerTable: ArrayBuffer[TreeNode]): TreeNode = {
     val root: TreeNode = new TreeNode()
 
-    for(index <- 0 until transactions.length){
-      val transaction = (transactions(index)).toBuffer //in case of reassignment, we convert Array to Buffer
+    for(transaction <- transactions){
       val sortedTransaction = sortByHeaderTable(transaction, headerTable)
       var subTreeRoot: TreeNode = root
       var tmpRoot: TreeNode = null
@@ -70,12 +69,13 @@ class FPTree{
       addNodes(subTreeRoot, sortedTransaction, headerTable)
     }
 
-    def sortByHeaderTable(transaction: Buffer[String], headerTable: Buffer[TreeNode]): ArrayBuffer[String] = {
-      val map: HashMap[String, Int] = new mutable.HashMap[String, Int]()
+    def sortByHeaderTable(transaction: ArrayBuffer[String], headerTable: ArrayBuffer[TreeNode]): ArrayBuffer[String] = {
+      val map: HashMap[String, Int] = new HashMap[String, Int]()
       for(item <- transaction){
         for(index <- 0 until headerTable.length){
           if(headerTable(index).name.equals(item)){
-            map.put(item, index)
+            //map.put(item, index)
+            map(item) = index
           }
         }
       }
@@ -85,7 +85,7 @@ class FPTree{
       sortedTransaction //return sortedTransaction
     }
 
-    def addNodes(parent: TreeNode, transaction: Buffer[String], headerTable: Buffer[TreeNode]): Unit = {
+    def addNodes(parent: TreeNode, transaction: ArrayBuffer[String], headerTable: ArrayBuffer[TreeNode]): Unit = {
       while(transaction.nonEmpty){
         val name: String = transaction.head
         transaction.remove(0)
@@ -114,21 +114,25 @@ class FPTree{
     root // return root
   }
 
-  def FPGrowth(transactions: Buffer[Buffer[String]], postPattern: ArrayBuffer[String], supportThreshold: Int): Unit = {
+  def FPGrowth(transactions: ArrayBuffer[ArrayBuffer[String]], postPattern: ArrayBuffer[String], supportThreshold: Int): Unit = {
+    val headerTable: ArrayBuffer[TreeNode] = buildHeaderTable(transactions, supportThreshold)
 
-    val headerTable: Buffer[TreeNode] = buildHeaderTable(transactions, supportThreshold).toBuffer
     val treeRoot = buildFPTree(transactions, headerTable)
+
     if(treeRoot.children.nonEmpty){
       if(postPattern.nonEmpty){
         var result: String = ""
         for(node <- headerTable){
           result += "Frequency: " + node.count + " " + node.name +  " "
+          print("Frequency: " + node.count + " " + node.name +  " ")
           for(pattern <- postPattern){
             result += pattern + " "
+            print(pattern + " ")
           }
           result += "\n"
+          print("\n")
         }
-        println(result)
+        patterns += result
       }
 
     for (node: TreeNode <- headerTable) {
@@ -136,7 +140,7 @@ class FPTree{
       newPostPattern += node.name
       if (postPattern.nonEmpty)
         newPostPattern ++= postPattern
-      val newTransactions: Buffer[Buffer[String]] = new ArrayBuffer[Buffer[String]]()
+      val newTransactions: ArrayBuffer[ArrayBuffer[String]] = new ArrayBuffer[ArrayBuffer[String]]()
       var backNode: TreeNode = node.nextHomonym
       while (backNode != null) {
         var counter: Int = backNode.count
@@ -152,6 +156,7 @@ class FPTree{
         }
         backNode = backNode.nextHomonym
       }
+
       FPGrowth(newTransactions, newPostPattern, supportThreshold)
     }
 

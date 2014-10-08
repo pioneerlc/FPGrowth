@@ -40,9 +40,19 @@ object FPGrowth {
     conf.setMaster("spark://localhost:7077").setAppName("FPGrowth").set("spark.executor.memory", "64m").setJars(jars)
     val sc = new SparkContext(conf)
     val input = sc.textFile("hdfs://localhost:9000/hduser/wordcount/input")
-    val records = input.map(line => Array(line)).collect()
-    FPTree(records, supportThreshold)
+    val records = input.map(line => line.split(" ")).collect() // transform RDD to Array[Array[String]]
+    val fptree = FPTree(records, supportThreshold)
+    sc.makeRDD(fptree.patterns).saveAsTextFile("hdfs://localhost:9000/hduser/wordcount/output/")
 
+    //val check = sc.textFile("hdfs://localhost:9000/hduser/wordcount/output/")
+    //val results = check.map(line => Array(line)).collect()
+    //for(result <- results){
+      //println("start")
+      //for(item <- result){
+        //println(item)
+      //}
+      //println("end")
+    //}
     sc.stop()
   }
 }
