@@ -4,15 +4,15 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 
 /**
- * TreeNode.scala
+ * FPTree.scala
  * This is the definition of FP-Tree.
  * Author: Mark Lin
  * E-mail: chlin.ecnu@gmail.com
- * Version: 1.0
+ * Version: 1.1
  */
 
-object FPTree {
-  def apply(records: Array[Array[String]], supportThreshold: Int): FPTree ={
+object FPTree{
+  def apply(records: Array[Array[String]], supportThreshold: Int): FPTree = {
     var transactions = new ArrayBuffer[ArrayBuffer[String]]()
     for(record <- records){
       var transaction = new ArrayBuffer[String]()
@@ -23,9 +23,10 @@ object FPTree {
     fptree.FPGrowth(transactions, new ArrayBuffer[String](), supportThreshold)
     fptree
   }
-}
+} //end of object FPTree
 
 class FPTree(var patterns: ArrayBuffer[String]){
+
   def buildHeaderTable(transactions: ArrayBuffer[ArrayBuffer[String]], supportThreshold: Int): ArrayBuffer[TreeNode] = {
     if(transactions.nonEmpty){
       val map: HashMap[String, TreeNode] = new HashMap[String, TreeNode]()
@@ -40,17 +41,16 @@ class FPTree(var patterns: ArrayBuffer[String]){
           }
         }
       }
-      var headerTable = new ArrayBuffer[TreeNode]()
+      val headerTable = new ArrayBuffer[TreeNode]()
       map.filter(_._2.count >= supportThreshold).values.toArray.sortWith(_.count > _.count).copyToBuffer(headerTable)
       headerTable //return headerTable
     }else{
       null //if transactions is empty, return null
     }
-  }
+  } //end of buildHeaderTable
 
   def buildFPTree(transactions: ArrayBuffer[ArrayBuffer[String]], headerTable: ArrayBuffer[TreeNode]): TreeNode = {
     val root: TreeNode = new TreeNode()
-
     for(transaction <- transactions){
       val sortedTransaction = sortByHeaderTable(transaction, headerTable)
       var subTreeRoot: TreeNode = root
@@ -64,17 +64,16 @@ class FPTree(var patterns: ArrayBuffer[String]){
           tmpRoot.count += 1
           subTreeRoot = tmpRoot
           sortedTransaction.remove(0)
-        }
-      }
+        } //end of while
+      } //end of if
       addNodes(subTreeRoot, sortedTransaction, headerTable)
-    }
+    } //end of for
 
     def sortByHeaderTable(transaction: ArrayBuffer[String], headerTable: ArrayBuffer[TreeNode]): ArrayBuffer[String] = {
       val map: HashMap[String, Int] = new HashMap[String, Int]()
       for(item <- transaction){
         for(index <- 0 until headerTable.length){
           if(headerTable(index).name.equals(item)){
-            //map.put(item, index)
             map(item) = index
           }
         }
@@ -83,9 +82,9 @@ class FPTree(var patterns: ArrayBuffer[String]){
       val sortedTransaction: ArrayBuffer[String] = new ArrayBuffer[String]()
       map.toArray.sortWith(_._2 < _._2).foreach(sortedTransaction += _._1)
       sortedTransaction //return sortedTransaction
-    }
+    } //end of sortByHeaderTable
 
-    def addNodes(parent: TreeNode, transaction: ArrayBuffer[String], headerTable: ArrayBuffer[TreeNode]): Unit = {
+    def addNodes(parent: TreeNode, transaction: ArrayBuffer[String], headerTable: ArrayBuffer[TreeNode]){
       while(transaction.nonEmpty){
         val name: String = transaction.head
         transaction.remove(0)
@@ -109,12 +108,12 @@ class FPTree(var patterns: ArrayBuffer[String]){
 
         addNodes(leaf, transaction, headerTable)
       }
-    }
+    } //end of addNodes
 
-    root // return root
-  }
+    root //return root
+  } //end of buildFPTree
 
-  def FPGrowth(transactions: ArrayBuffer[ArrayBuffer[String]], postPattern: ArrayBuffer[String], supportThreshold: Int): Unit = {
+  def FPGrowth(transactions: ArrayBuffer[ArrayBuffer[String]], postPattern: ArrayBuffer[String], supportThreshold: Int){
     val headerTable: ArrayBuffer[TreeNode] = buildHeaderTable(transactions, supportThreshold)
 
     val treeRoot = buildFPTree(transactions, headerTable)
@@ -158,10 +157,10 @@ class FPTree(var patterns: ArrayBuffer[String]){
       }
 
       FPGrowth(newTransactions, newPostPattern, supportThreshold)
-    }
+    } //end of for
 
-    }
-  }
-}
+    } //end of if
+  } //end of FPGrowth
+} //end of FPTree
 
 
