@@ -8,7 +8,7 @@ import scala.collection.mutable.ListBuffer
  * This is a navie implementation of FPGrowth|Parallel FPGrowth for learning how to use Spark and Scala.
  * Author: Mark Lin
  * E-mail: chlin.ecnu@gmail.com
- * Version: 2.0
+ * Version: 1.1
  */
 
 object FPGrowth {
@@ -19,7 +19,7 @@ object FPGrowth {
         |This is a navie implementation of FPGrowth|Parallel FPGrowth for learning how to use Spark and Scala.
         |Author: Mark Lin
         |E-mail: chlin.ecnu@gmail.com
-        |Version: 2.0
+        |Version: 1.1
       """.stripMargin)
   }
 
