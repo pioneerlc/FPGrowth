@@ -27,4 +27,6 @@ This verison of FPGrowth can be successfully run by Test.scala. However, it can 
 Version 1.1:
 This verison of FPGrowth fix the problem of version 1.0, which can not print anything on the terminal.
 
-
+Version 2.0:
+In this version, I add ParallelFPGrowth.scala into this project, which has been partly accomplished. Until now, computing the frequency list of transactions database and dividing
+transactions into Q groups have been implemented in ParallelFPGrowth.scala. I will add the remaining features later.
