@@ -10,13 +10,16 @@ E-mail: chlin.ecnu@gmail.com
 
 This project contains files as follows:
 
-FPGrowth.scala: entry point when running on spark, initialzing spark, load file from hdfs, call FPTree
+FPGrowth.scala: entry point when running on spark, including initialzing spark, load file from hdfs, call FPTree
 
-FPTree.scala: main implementation of FPGrowth, build header-table, build FPTree, mining frequent patterns by traversing FPTree
+FPTree.scala: main implementation of FPGrowth, including build header-table, build FPTree, mining frequent patterns by traversing FPTree
 
 Test.scala: entry point when testing locally
 
 TreeNode.scala: data structure of tree node of FPTree
+
+ParallelFPGrowth.scala: main implementation of parallel FPGrowth, including computing the frequency list of transactions database, dividing
+transactions into Q groups
 
 
 Revision log
