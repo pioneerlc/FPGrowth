@@ -18,8 +18,7 @@ Test.scala: entry point when testing locally
 
 TreeNode.scala: data structure of tree node of FPTree
 
-ParallelFPGrowth.scala: main implementation of parallel FPGrowth, including computing the frequency list of transactions database, dividing
-transactions into Q groups
+ParallelFPGrowth.scala: main implementation of parallel FPGrowth, including computing the frequency list of transactions database, dividing transactions into Q groups, mining from local FPTree
 
 
 Revision log
