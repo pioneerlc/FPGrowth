@@ -33,3 +33,6 @@ This verison of FPGrowth fix the problem of version 1.0, which can not print any
 Version 2.0:
 In this version, I add ParallelFPGrowth.scala into this project, which has been partly accomplished. Until now, computing the frequency list of transactions database and dividing
 transactions into Q groups have been implemented in ParallelFPGrowth.scala. I will add the remaining features later.
+
+Version 2.1:
+In this version, ParallelFPGrowth.scala has been implemented completely.
