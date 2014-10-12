@@ -186,11 +186,13 @@ class LocalFPTree(var patterns: ArrayBuffer[String]){
       if(postPattern.nonEmpty){
         for(node <- headerTable){
           var result: String = ""
-          result += "Frequency: " + node.count + " " + node.name +  " "
+          result += "Frequency: " + node.count + " "
+          val temp = new ArrayBuffer[String]()
+          temp += node.name
           for(pattern <- postPattern){
-            result += pattern + " "
+            temp += pattern
           }
-          result += "\n"
+          result += temp.sortWith(_ < _).mkString(" ").toString + "\n"
           if(!patterns.contains(result))
             patterns += result
         }

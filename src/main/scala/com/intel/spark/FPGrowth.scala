@@ -37,7 +37,7 @@ object FPGrowth {
     args(0).split(",").map(jars += _)
     val supportThreshold = args(1).toInt
     val method = if(args(2).equals("sequential")) 0 else if(args(2).equals("parallel")) 1 else showError()
-    val NUM_PER_GROUPS_DEFAULT = 5
+    val NUM_PER_GROUPS_DEFAULT = 2
     var numPerGroup = NUM_PER_GROUPS_DEFAULT
     if((args.length + 1) == 5){
       numPerGroup = args(3).toInt
