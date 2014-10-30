@@ -1,7 +1,7 @@
 FPGrowth
 ========
 
-This is a navie implementation of FPGrowth for learning how to use Spark and Scala. 
+This is a naive implementation of FPGrowth for learning how to use Spark and Scala. 
 
 Author: Mark Lin
 
