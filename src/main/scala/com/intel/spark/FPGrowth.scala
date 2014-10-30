@@ -5,10 +5,10 @@ import scala.collection.mutable.ListBuffer
 
 /**
  * FPGrowth.scala
- * This is a navie implementation of FPGrowth|Parallel FPGrowth for learning how to use Spark and Scala.
+ * This is a naive implementation of FPGrowth|Parallel FPGrowth for learning how to use Spark and Scala.
  * Author: Mark Lin
  * E-mail: chlin.ecnu@gmail.com
- * Version: 2.1
+ * Version: 2.0
  */
 
 object FPGrowth {
@@ -19,12 +19,19 @@ object FPGrowth {
         |This is a navie implementation of FPGrowth|Parallel FPGrowth for learning how to use Spark and Scala.
         |Author: Mark Lin
         |E-mail: chlin.ecnu@gmail.com
-        |Version: 2.1
+        |Version: 2.0
       """.stripMargin)
   }
 
   def showError(): Unit = {
-    println("Usage: java -jar code.jar dependencies.jar supportThreshold method<sequential|parallel> numPerGroup(Optional)")
+    println(
+      """
+        |Usage: java -jar code.jar dependencies.jar minSupport method<sequential|parallel> numGroups
+        |Parameters:
+        |  minSupport - The minimum number of times a co-occurrence must be present
+        |  method - Method of processing: sequential|parallel
+        |  numGroups - (Optional) Number of groups the features should be divided in the parallel version
+      """.stripMargin)
     System.exit(-1)
   }
   def main(args: Array[String]): Unit = {
@@ -35,30 +42,31 @@ object FPGrowth {
 
     val jars = ListBuffer[String]()
     args(0).split(",").map(jars += _)
-    val supportThreshold = args(1).toInt
+    val minSupport = args(1).toInt
     val method = if(args(2).equals("sequential")) 0 else if(args(2).equals("parallel")) 1 else showError()
-    val NUM_PER_GROUPS_DEFAULT = 2
-    var numPerGroup = NUM_PER_GROUPS_DEFAULT
-    if((args.length + 1) == 5){
-      numPerGroup = args(3).toInt
-      if(numPerGroup > 5){
-        println("WARN:")
-        println("Too large numPerGroup may lead to wrong answer.")
-      }
-    }
 
     val conf = new SparkConf()
-    conf.setMaster("spark://localhost:7077").setAppName("FPGrowth").set("spark.executor.memory", "64m").setJars(jars)
+    conf.setMaster("spark://localhost:7077").setAppName("FPGrowth").set("spark.executor.memory", "128m").setJars(jars)
     val sc = new SparkContext(conf)
-    val input = sc.textFile("hdfs://localhost:9000/hduser/wordcount/input")
+    val input = sc.textFile("hdfs://localhost:9000/hduser/wordcount/input/input.csv", 3)
 
+    if(method == 0) {
+      val transactions = input.map(line => line.split(",")).collect() //transform RDD to Array[Array[String]]
+      val fptree = FPTree(transactions, minSupport)
+      sc.makeRDD(fptree.patterns).saveAsTextFile("hdfs://localhost:9000/hduser/fpgrowth/output/")
+    } else {
+      val NUM_GROUPS_DEFAULT = 5
+      var numGroups = NUM_GROUPS_DEFAULT
+      if((args.length + 1) == 5){
+        numGroups = args(3).toInt
+        if(numGroups > 5){
+          println("WARN:")
+          println("Too large numGroups might lead to wrong answer.")
+        }
+      }
 
-    if(method == 0){
-      val transactions = input.map(line => line.split(" ")).collect() //transform RDD to Array[Array[String]]
-      val fptree = FPTree(transactions, supportThreshold)
-      sc.makeRDD(fptree.patterns).saveAsTextFile("hdfs://localhost:9000/hduser/wordcount/output/")
-    }else{
-      ParallelFPGrowth(input, supportThreshold, numPerGroup)
+      val patterns = ParallelFPGrowth(input, minSupport, numGroups)
+      patterns.saveAsTextFile("hdfs://localhost:9000/hduser/fpgrowth/output/")
     }
 
     sc.stop()

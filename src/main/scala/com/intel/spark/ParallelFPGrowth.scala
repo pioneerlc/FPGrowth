@@ -2,26 +2,45 @@ package com.intel.spark
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
-import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, HashMap, Set}
 
 /**
  * ParallelFPGrowth.scala
- * This is a navie implementation of Parallel FPGrowth for learning how to use Spark and Scala.
+ * This is a naive implementation of Parallel FPGrowth for learning how to use Spark and Scala.
  * Author: Mark Lin
  * E-mail: chlin.ecnu@gmail.com
  * Version: 2.1
  */
 
 object ParallelFPGrowth {
-  def apply(input: RDD[String], supportThreshold: Int, numPerGroup: Int): Unit ={
-    val transactions = input.map(line => line.split(" ")).cache
-    val fList= input.flatMap(line => line.split(" ")).map(word => (word, 1)).reduceByKey(_ + _).filter(_._2 >= supportThreshold).map(pair => pair.swap).sortByKey(false).map(pair => pair.swap).cache.collect
-
-    val patterns = transactions.flatMap(line => ParallelFPGrowthMapper().map(line, fList, numPerGroup)).groupByKey.flatMap(line => ParallelFPGrowthReducer().reduce(line, supportThreshold)).cache.collect
-    for(pattern <- patterns.distinct){
+  def apply(input: RDD[String], minSupport: Int, numGroups: Int): RDD[String] ={
+    val transactions = input.map(line => line.split(",")).cache
+    val fList= input.flatMap(line => line.split(",")).map(word => (word, 1)).reduceByKey(_ + _).filter(_._2 >= minSupport).map(pair => pair.swap).sortByKey(false).map(pair => pair.swap).cache.collect
+    val fMap = getFMap(fList)
+    val maxPerGroup = getMaxPerGroup(fList, numGroups)
+    val patterns = transactions.flatMap(line => ParallelFPGrowthMapper().map(line, fMap, maxPerGroup)).groupByKey.flatMap(line => ParallelFPGrowthReducer().reduce(line, minSupport)).distinct.cache
+    for(pattern <- patterns.collect){
       print(pattern)
     }
+    patterns
+  }
+
+  def getFMap(fList: Array[(String, Int)]) : HashMap[String, Int] = {
+    var i = 0
+    val fMap = new HashMap[String, Int]()
+    for(pair <- fList){
+      fMap.put(pair._1, i)
+      i += 1
+    }
+    fMap
+  }
+
+  def getMaxPerGroup(fList: Array[(String, Int)], numGroups: Int): Int = {
+    var maxPerGroup = fList.length / numGroups
+    if (fList.length % numGroups != 0) {
+      maxPerGroup += 1
+    }
+    maxPerGroup
   }
 }
 
@@ -33,8 +52,8 @@ object ParallelFPGrowthMapper{
 }
 
 class ParallelFPGrowthMapper(){
-  def map(transaction: Array[String], fList: Array[(String, Int)], numPerGroup: Int): ArrayBuffer[(Int, ArrayBuffer[String])] ={
-    def getfMap(fList: Array[(String, Int)]): HashMap[String, Int] = {
+  def map(transaction: Array[String], fMap: HashMap[String, Int], maxPerGroup: Int): ArrayBuffer[(Int, ArrayBuffer[String])] ={
+    /* def getfMap(fList: Array[(String, Int)]): HashMap[String, Int] = {
       var i = 0
       val fMap = new HashMap[String, Int]()
       for(pair <- fList){
@@ -43,14 +62,15 @@ class ParallelFPGrowthMapper(){
       }
       fMap
     } //end of getfMap
+    */
 
-    def getGroupID(item: Int, numPerGroup: Int): Int ={
-      item / numPerGroup
+    def getGroupID(itemId: Int, maxPerGroup: Int): Int ={
+      itemId / maxPerGroup
     } //end of getGroupID
 
     var retVal = new ArrayBuffer[(Int, ArrayBuffer[String])]()
     var itemArr = new ArrayBuffer[Int]()
-    val fMap: HashMap[String, Int] = getfMap(fList)
+    //val fMap: HashMap[String, Int] = getfMap(fList)
     for(item <- transaction){
       if(fMap.keySet.contains(item)){
         itemArr += fMap(item)
@@ -60,7 +80,7 @@ class ParallelFPGrowthMapper(){
     val groups = new ArrayBuffer[Int]()
     for(i <- (0 until itemArr.length).reverse){
       val item = itemArr(i)
-      val groupID = getGroupID(item, numPerGroup)
+      val groupID = getGroupID(item, maxPerGroup)
       if(!groups.contains(groupID)){
         val tempItems = new ArrayBuffer[Int]()
         tempItems ++= itemArr.slice(0, i + 1)
@@ -81,17 +101,17 @@ object ParallelFPGrowthReducer{
 }
 
 class ParallelFPGrowthReducer(){
-  def reduce(line: (Int, Iterable[ArrayBuffer[String]]), supportThreshold: Int): ArrayBuffer[String] ={
+  def reduce(line: (Int, Iterable[ArrayBuffer[String]]), minSupport: Int): ArrayBuffer[String] ={
     val transactions = line._2
     val localFPTree = new LocalFPTree(new ArrayBuffer[String]())
-    localFPTree.FPGrowth(transactions, new ArrayBuffer[String], supportThreshold)
+    localFPTree.FPGrowth(transactions, new ArrayBuffer[String], minSupport)
     localFPTree.patterns
   }
 }
 
 class LocalFPTree(var patterns: ArrayBuffer[String]){
 
-  def buildHeaderTable(transactions: Iterable[ArrayBuffer[String]], supportThreshold: Int): ArrayBuffer[TreeNode] = {
+  def buildHeaderTable(transactions: Iterable[ArrayBuffer[String]], minSupport: Int): ArrayBuffer[TreeNode] = {
     if(transactions.nonEmpty){
       val map: HashMap[String, TreeNode] = new HashMap[String, TreeNode]()
       for(transaction <- transactions){
@@ -106,7 +126,7 @@ class LocalFPTree(var patterns: ArrayBuffer[String]){
         }
       }
       val headerTable = new ArrayBuffer[TreeNode]()
-      map.filter(_._2.count >= supportThreshold).values.toArray.sortWith(_.count > _.count).copyToBuffer(headerTable)
+      map.filter(_._2.count >= minSupport).values.toArray.sortWith(_.count > _.count).copyToBuffer(headerTable)
       headerTable //return headerTable
     }else{
       null //if transactions is empty, return null
@@ -177,8 +197,8 @@ class LocalFPTree(var patterns: ArrayBuffer[String]){
     root //return root
   } //end of buildTransactionTree
 
-  def FPGrowth(transactions: Iterable[ArrayBuffer[String]], postPattern: ArrayBuffer[String], supportThreshold: Int){
-    val headerTable: ArrayBuffer[TreeNode] = buildHeaderTable(transactions, supportThreshold)
+  def FPGrowth(transactions: Iterable[ArrayBuffer[String]], postPattern: ArrayBuffer[String], minSupport: Int){
+    val headerTable: ArrayBuffer[TreeNode] = buildHeaderTable(transactions, minSupport)
 
     val treeRoot = buildLocalFPTree(transactions, headerTable)
 
@@ -193,9 +213,11 @@ class LocalFPTree(var patterns: ArrayBuffer[String]){
             temp += pattern
           }
           result += temp.sortWith(_ < _).mkString(" ").toString + "\n"
-          if(!patterns.contains(result))
+          if(!patterns.contains(result)){
             patterns += result
+          }
         }
+
       }
 
       for (node: TreeNode <- headerTable) {
@@ -220,7 +242,7 @@ class LocalFPTree(var patterns: ArrayBuffer[String]){
           backNode = backNode.nextHomonym
         }
 
-        FPGrowth(newTransactions, newPostPattern, supportThreshold)
+        FPGrowth(newTransactions, newPostPattern, minSupport)
       } //end of for
 
     } //end of if
