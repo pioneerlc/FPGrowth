@@ -36,3 +36,5 @@ transactions into Q groups have been implemented in ParallelFPGrowth.scala. I wi
 Version 2.1:
 In this version, ParallelFPGrowth.scala has been implemented completely.
 
+Version 2.2:
+This version fix one bug which will lead to wrong answers when running on spark.
