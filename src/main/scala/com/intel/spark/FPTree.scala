@@ -4,15 +4,18 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 
 /**
- * FPTree.scala
- * This is the definition of FP-Tree.
- * Author: Mark Lin
+ * File: FPTree.scala
+ * Description: This is an implementation of the FPTree as described in Han, Jiawei, et al.,
+ *              "Mining frequent patterns without candidate generation: A frequent-pattern tree approach",
+ *              data mining and knowledge discovery, 2004.
+ * Author: Lin, Chen
  * E-mail: chlin.ecnu@gmail.com
- * Version: 1.1
+ * Version: 2.3
  */
 
 object FPTree{
-  def apply(records: Array[Array[String]], minSupport: Int): FPTree = {
+  def apply(records: Array[Array[String]], minSupport: Int): ArrayBuffer[String] = {
+    //Transform Array[Array[String]] to ArrayBuffer[ArrayBuffer[String]] in case elements of transactions will be modified.
     var transactions = new ArrayBuffer[ArrayBuffer[String]]()
     for(record <- records){
       var transaction = new ArrayBuffer[String]()
@@ -20,14 +23,25 @@ object FPTree{
       transactions += transaction
     }
 
+    //Create FPTree.
     val fptree = new FPTree(new ArrayBuffer[String]())
+
+    //Run FPGrowth.
     fptree.FPGrowth(transactions, new ArrayBuffer[String](), minSupport)
-    fptree
-  }
-} //end of object FPTree
+
+    //Return frequent patterns mined from fptree.
+    fptree.patterns
+  }//End of apply method
+} //End of object FPTree.
 
 class FPTree(var patterns: ArrayBuffer[String]){
 
+  /**
+   *
+   * @param transactions
+   * @param minSupport
+   * @return
+   */
   def buildHeaderTable(transactions: ArrayBuffer[ArrayBuffer[String]], minSupport: Int): ArrayBuffer[TreeNode] = {
     if(transactions.nonEmpty){
       val map: HashMap[String, TreeNode] = new HashMap[String, TreeNode]()
@@ -43,7 +57,7 @@ class FPTree(var patterns: ArrayBuffer[String]){
         }
       }
       val headerTable = new ArrayBuffer[TreeNode]()
-      map.filter(_._2.count >= minSupport).values.toArray.sortWith(_.count > _.count).copyToBuffer(headerTable)
+      map.filter(_._2.count >= minSupport).values.toArray.sortWith(_.name < _.name).sortWith(_.count > _.count).copyToBuffer(headerTable)
       headerTable //return headerTable
     }else{
       null //if transactions is empty, return null
@@ -94,15 +108,15 @@ class FPTree(var patterns: ArrayBuffer[String]){
         leaf.parent = parent
         parent.children += leaf
 
-        var cond = true //for breaking out of while loop
+        var break = true //for breaking out of while loop
         var index: Int = 0
-        while(cond && index < headerTable.length){
+        while(break && index < headerTable.length){
           var node = headerTable(index)
           if(node.name.equals(name)){
             while(node.nextHomonym != null)
               node = node.nextHomonym
             node.nextHomonym  = leaf
-            cond = false
+            break = false
           }
           index += 1
         }

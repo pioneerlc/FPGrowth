@@ -4,8 +4,8 @@ import scala.collection.mutable.ArrayBuffer
 
 /**
  * TreeNode.scala
- * This is the definition of TreeNode of FP-Tree
- * Author: Mark Lin
+ * Description: This is the definition of TreeNode of FP-Tree
+ * Author: Lin, Chen
  * E-mail: chlin.ecnu@gmail.com
  * Version: 1.0
  */
