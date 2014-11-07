@@ -244,9 +244,9 @@ class LocalFPTree(var patterns: ArrayBuffer[(Int, String)]){
           // Remove the first item of sortedTransaction.
           sortedTransaction.remove(0)
         } // end of while
-      } else {
-        addNodes(subTreeRoot, sortedTransaction, headerTable)
       }
+      
+      addNodes(subTreeRoot, sortedTransaction, headerTable)
     } // end of for
 
     /**
